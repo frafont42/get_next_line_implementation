@@ -8,7 +8,7 @@ char *cut(char *str)
 	j = 0;
 	while (str[i] != '\n')
 		i++;
-	right_str = (char *)malloc(sizeof(char) * i + 1);
+	right_str = (char *)malloc(sizeof(char) * (i + 1));
 	while (str[j])
 	{
 		right_str[j] = str[j];

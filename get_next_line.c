@@ -7,7 +7,7 @@ char *get_next_line.c(int fd)
 		return (NULL);
 	list_maker(list, fd);
 	store(next_line, list);
-	free_list(list)
 	cut(next_line);
+	free_list(list);
 	return (next_line);
 }
