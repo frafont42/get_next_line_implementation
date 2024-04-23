@@ -116,6 +116,7 @@ t_list* list_maker(int fd)
         list->buffer = NULL;
         string_buffer = NULL;
         int found_newline = 0;
+	int i = 0;
         while (found_newline==0)
         {
                 string_buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
@@ -128,10 +129,13 @@ t_list* list_maker(int fd)
                         return NULL;
                 }
                 string_buffer[char_read] = '\0';
-                for(int i=0; i<char_read;i++){
-                        if(string_buffer[i] == '\n')
-                                found_newline=1;
-                }
+                i = 0;
+		while (i < char_read)
+		{
+			if (string_buffer[i] == '\n')
+				found_newline = 1;
+			i++;
+		}
                 concatenate(list, string_buffer);
                 free(string_buffer);
         }
