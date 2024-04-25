@@ -33,22 +33,22 @@ t_list *find_last_node(t_list *list) {
     return current;
 }
 
-void free_list(t_list **list, char *str)
+void free_list(t_list *list, char *str)
 {
         t_list *z;
 
-        while (*list)
+        while (list)
         {
-                z = (*list)->next_node;
-                free((*list)->buffer);
-                free(*list);
-                *list = z;
+                z = list->next_node;
+                free(list->buffer);
+                free(list);
+                list = z;
         }
-        *list = NULL;
+        list = NULL;
         if (str)
         {
-                (*list)->buffer = str;
-                (*list)->next_node = NULL;
+                list->buffer = str;
+                list->next_node = NULL;
         }
         else
                 free(str);
@@ -170,7 +170,7 @@ char *join_list(t_list *list)
         return (line);
 }
 
-void make_next_list(t_list **list)
+void make_next_list(t_list *list)
 {
     t_list *last_node;
     char *first_buffer;
@@ -238,18 +238,23 @@ char *get_next_line(int fd)
         static t_list *list;
         char *next_line;
 
-	//list = (t_list *)malloc(sizeof(t_list));
-	write(1, "prima riga di gnl\n", 18);
+	list = (t_list *)malloc(sizeof(t_list));
         if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, &list, BUFFER_SIZE) < 0)
                 return (NULL);
-	write(1, "dopo if gnl\n", 12);
         list = list_maker(fd);
 	if (list == NULL)
 		return (NULL);
-	write(1, "prima di joinlist in gnl\n", 25);
         next_line = join_list(list);
         next_line = cut(next_line);
-        make_next_list(&list);
+        make_next_list(list);
         return (next_line);
 }
 
+int main()
+{
+	char *str;
+	int fd = open("file.txt", O_RDONLY);
+
+	str = get_next_line(fd);
+	printf("%s\n", str);
+}
