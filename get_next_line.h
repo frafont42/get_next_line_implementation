@@ -18,7 +18,7 @@ typedef struct s_list
 
 int check_nl(char *str);
 t_list *find_last_node(t_list *list);
-void free_list(t_list *list, char *str);
+void free_list(t_list *list, t_list *node, char *str);
 int line_len(t_list *list);
 char *cut(char *str);
 t_list *list_maker(int fd);

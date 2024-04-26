@@ -4,21 +4,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-int check_nl(char *str)
-{
-        int i;
+// int check_nl(char *str)
+// {
+//         int i;
 
-        i = 0;
-        if (str == NULL || *str == '\0')
-                return (0);
-        while(str[i])
-        {
-                if (str[i] == '\n')
-                        return (1);
-                i++;
-        }
-        return (0);
-}
+//         i = 0;
+//         if (str == NULL || *str == '\0')
+//                 return (0);
+//         while(str[i])
+//         {
+//                 if (str[i] == '\n')
+//                         return (1);
+//                 i++;
+//         }
+//         return (0);
+// }
 
 t_list *find_last_node(t_list *list) {
     if (list == NULL) {
@@ -33,25 +33,32 @@ t_list *find_last_node(t_list *list) {
     return current;
 }
 
-void free_list(t_list *list, char *str)
+void free_list(t_list *list, t_list *node, char *str)
 {
         t_list *z;
-
-        while (list)
+        
+        z = (t_list *)malloc(sizeof(t_list));
+        while (list->buffer)
         {
                 z = list->next_node;
-                free(list->buffer);
+                //printf("%s\n", z->buffer);
+                //free(list->buffer);
                 free(list);
                 list = z;
+                if (!list)
+                        break ;
         }
-        list = NULL;
+        list = (t_list *)malloc(sizeof(t_list));
         if (str)
         {
-                list->buffer = str;
-                list->next_node = NULL;
+                list = node;
+                printf("test in freelist: %s\n", list->buffer);
         }
         else
+        {
                 free(str);
+                free(node);
+        }
 }
 
 int line_len(t_list *list)
@@ -60,12 +67,10 @@ int line_len(t_list *list)
         int i;
 
         len = 0;
-	printf("prima degli if di linelen");
         if (list == NULL)
                 return (0);
         if (list->next_node == NULL)
                 return (0);
-	printf("prima del while di linelen");
         while (list)
         {
                 if (list->buffer)
@@ -98,7 +103,7 @@ char *cut(char *str)
                 right_str[j] = str[j];
                 if (str[j] == '\n')
                 {
-                        j++;
+                        //j++; ritorna la riga con il /n
                         break;
                 }
                 j++;
@@ -111,7 +116,7 @@ t_list* list_maker(int fd)
 {
         char *string_buffer;
         int char_read;
-        t_list* list = (t_list *)malloc(sizeof(t_list));
+        t_list *list = (t_list *)malloc(sizeof(t_list));
         list->next_node = NULL;
         list->buffer = NULL;
         string_buffer = NULL;
@@ -154,7 +159,6 @@ char *join_list(t_list *list)
         line = (char *)malloc(sizeof(char) * (len + 1));
         if (!line)
                 return (NULL);
-	printf("prima del while di joinlist");
         while (list)
         {
                 j = 0;
@@ -173,6 +177,7 @@ char *join_list(t_list *list)
 void make_next_list(t_list *list)
 {
     t_list *last_node;
+    t_list *first_next_node;
     char *first_buffer;
     int i;
     int j;
@@ -180,6 +185,7 @@ void make_next_list(t_list *list)
     i = 0;
     j = 0;
     last_node = find_last_node(list);
+    first_next_node = (t_list *)malloc(sizeof(t_list));
     first_buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
     while(last_node->buffer[i] && last_node->buffer[i] != '\n')
         i++;
@@ -193,7 +199,9 @@ void make_next_list(t_list *list)
         }
         first_buffer[j] = '\0';
     }
-    free_list(list, first_buffer);
+    first_next_node->buffer = first_buffer;
+    first_next_node->next_node = NULL;
+    free_list(list, first_next_node, first_buffer);
 }
 
 void concatenate(t_list *list, char *str)
@@ -238,8 +246,7 @@ char *get_next_line(int fd)
         static t_list *list;
         char *next_line;
 
-	list = (t_list *)malloc(sizeof(t_list));
-        if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, &list, BUFFER_SIZE) < 0)
+        if (fd < 0 || BUFFER_SIZE <= 0)
                 return (NULL);
         list = list_maker(fd);
 	if (list == NULL)
@@ -252,9 +259,9 @@ char *get_next_line(int fd)
 
 int main()
 {
-	char *str;
-	int fd = open("file.txt", O_RDONLY);
-
-	str = get_next_line(fd);
-	printf("%s\n", str);
+    int fd = open("file.txt", O_RDONLY);
+    char *str2 = get_next_line(fd);
+    printf("risultato di gnl: %s\n", str2);
+    char *str = get_next_line(fd);
+    printf("risultato di gnl: %s\n", str);
 }
