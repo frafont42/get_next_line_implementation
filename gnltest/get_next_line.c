@@ -4,6 +4,30 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+void	clean_list(t_list **list, t_list *new_head, char *buffer)
+{
+	t_list	*temp;
+
+	if (!*list)
+		return ;
+	while (*list)
+	{
+		temp = (*list)->next_node;
+		free((*list)->buffer);
+		free(*list);
+		*list = temp;
+	}
+	*list = NULL;
+	if (new_head->buffer[0])
+		(*list) = new_head;
+	else
+	{
+		free(buffer);
+		free(new_head);
+	}
+
+}
+
 // int check_nl(char *str)
 // {
 //         int i;
@@ -21,8 +45,9 @@
 // }
 
 t_list *find_last_node(t_list *list) {
-    if (list == NULL) {
-        write(1, "fln2\n", 5);
+    if (list == NULL)
+    {
+        // write(1, "fln2\n", 5);
         return NULL;
     }
     t_list *current;
@@ -33,32 +58,20 @@ t_list *find_last_node(t_list *list) {
     return current;
 }
 
-void free_list(t_list *list, t_list *node, char *str)
+void free_list(t_list **list)
 {
-        t_list *z;
-        
-        z = (t_list *)malloc(sizeof(t_list));
-        while (list->buffer)
-        {
-                z = list->next_node;
-                //printf("%s\n", z->buffer);
-                //free(list->buffer);
-                free(list);
-                list = z;
-                if (!list)
-                        break ;
-        }
-        list = (t_list *)malloc(sizeof(t_list));
-        if (str)
-        {
-                list = node;
-                printf("test in freelist: %s\n", list->buffer);
-        }
-        else
-        {
-                free(str);
-                free(node);
-        }
+        t_list	*temp;
+
+	if (!*list)
+		return ;
+	while (*list)
+	{
+		temp = (*list)->next_node;
+		free((*list)->buffer);
+		free(*list);
+		*list = temp;
+	}
+	*list = NULL;
 }
 
 int line_len(t_list *list)
@@ -69,8 +82,8 @@ int line_len(t_list *list)
         len = 0;
         if (list == NULL)
                 return (0);
-        if (list->next_node == NULL)
-                return (0);
+        // if (list->next_node == NULL)
+        //         return (0);
         while (list)
         {
                 if (list->buffer)
@@ -95,7 +108,7 @@ char *cut(char *str)
 
         i = 0;
         j = 0;
-        while (str[i] != '\n')
+        while (str[i] != '\n' && str[i])
                 i++;
         right_str = (char *)malloc(sizeof(char) * (i + 1));
         while (str[j])
@@ -121,15 +134,17 @@ void list_maker(t_list **list, int fd)
         string_buffer = NULL;
         int found_newline = 0;
 	int i = 0;
-        while (found_newline==0)
+        while (found_newline==0 )
         {
                 string_buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
                 if (!string_buffer)
                         return ;
                 char_read = read(fd, string_buffer, BUFFER_SIZE);
+                // printf("%d\n", char_read);
                 if (!char_read)
                 {
                         free(string_buffer);
+                        free_list(list);
                         return ;
                 }
                 string_buffer[char_read] = '\0';
@@ -139,7 +154,11 @@ void list_maker(t_list **list, int fd)
 			if (string_buffer[i] == '\n')
 				found_newline = 1;
 			i++;
+                        if (string_buffer[i] == '\0')
+                                found_newline = 1;
 		}
+                // printf("buffer: %s\tlist: %p\n", string_buffer, list);
+                // printf("nl %d\n", found_newline);
                 concatenate(list, string_buffer);
                 //free(string_buffer);
         }
@@ -153,6 +172,7 @@ char *join_list(t_list *list)
         int i;
         int j;
 
+        // printf("Join_list inside\n");
         len = line_len(list);
         i = 0;
         line = (char *)malloc(sizeof(char) * (len + 1));
@@ -173,7 +193,7 @@ char *join_list(t_list *list)
         return (line);
 }
 
-void make_next_list(t_list *list)
+void make_next_list(t_list **list)
 {
     t_list *last_node;
     t_list *first_next_node;
@@ -184,24 +204,25 @@ void make_next_list(t_list *list)
 
     i = 0;
     j = 0;
-    last_node = find_last_node(list);
+    last_node = find_last_node(*list);
     first_next_node = (t_list *)malloc(sizeof(t_list));
     first_buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
-    while(last_node->buffer[i] && last_node->buffer[i] != '\n')
+    while (last_node->buffer[i] && last_node->buffer[i] != '\n')
         i++;
-    if (last_node->buffer[++i])
+    if (last_node->buffer[i]) // Found a newline, create next list node
     {
+        i++; // Skip the newline character
         while (last_node->buffer[i])
         {
             first_buffer[j] = last_node->buffer[i];
             i++;
-	    j++;
+            j++;
         }
         first_buffer[j] = '\0';
+        first_next_node->buffer = first_buffer;
+        first_next_node->next_node = NULL;
+        clean_list(list, first_next_node, first_buffer);
     }
-    first_next_node->buffer = first_buffer;
-    first_next_node->next_node = NULL;
-    free_list(list, first_next_node, first_buffer);
 }
 
 void concatenate(t_list **list, char *str)
@@ -217,6 +238,9 @@ void concatenate(t_list **list, char *str)
                 *list = new_node;
         else
                 last_node->next_node = new_node;
+
+        // printf("concatenate: %s\n", new_node->buffer);
+        // printf("concatenate list: %p\n", *list);
 
 
         // if(list->buffer==NULL){
@@ -259,26 +283,49 @@ char *get_next_line(int fd)
         if (fd < 0 || BUFFER_SIZE <= 0)
                 return (NULL);
         list_maker(&list, fd);
+        // printf("list: %p\n", list);
 	if (list == NULL)
+        {
 		return (NULL);
+        }
+        // printf("join_list call\n");
         next_line = join_list(list);
         printf("next line is: %s\n", next_line);
         next_line = cut(next_line);
+        printf("cut line: %s\n", next_line);
         t_list *current_node = list;
-        while (current_node != NULL)
-        {
-                printf("Buffer del nodo: %s\n", current_node->buffer);
-                current_node = current_node->next_node;
-        }
-        make_next_list(list);
+        make_next_list(&list);
         return (next_line);
 }
 
+
+// int main()
+// {
+//     int fd = open("file.txt", O_RDONLY);
+//     if (fd < 0)
+//     {
+//         perror("Errore nell'apertura del file");
+//         return 1;
+//     }
+
+//     char *line;
+//     while ((line = get_next_line(fd)) != NULL)
+//     {
+//         printf("RISULTATO GNL: %s\n", line);
+//         free(line); // Liberiamo la memoria allocata per la linea
+//     }
+
+//     close(fd);
+//     return 0;
+// }
+
 int main()
 {
-    int fd = open("file.txt", O_RDONLY);
-    char *str2 = get_next_line(fd);
-    printf("risultato di gnl: %s\n", str2);
-    char *str = get_next_line(fd);
-    printf("risultato di gnl: %s\n", str);
+        int fd = open("file.txt", O_RDONLY);
+        char *str = get_next_line(fd);
+        printf("RISULTATO GNL: %s\n", str);
+        str = get_next_line(fd);
+        printf("RISULTATO GNL: %s\n", str);
+        str = get_next_line(fd);
+        printf("RISULTATO GNL: %s\n", str);
 }
