@@ -1,100 +1,103 @@
-// #include "get_next_line.h"
+#include "get_next_line.h"
 
-// int check_nl(char *str)
-// {
-// 	int i;
+t_list	*find_last_node(t_list *list)
+{
+	t_list	*current;
 
-// 	i = 0;
-// 	if (str == NULL || *str == '\0')
-// 		return (0);
-//         while(str[i])
-//         {
-//                 if (str[i] == '\n')
-//                         return (1);
-//                 i++;
-//         }
-//         return (0);
-// }
+	if (!list)
+	{
+		return (NULL);
+	}
+	current = list;
+	while (current->next)
+	{
+		current = current->next;
+	}
+	return (current);
+}
 
-// t_list *find_last_node(t_list *list)
-// {
-//         if (!list)
-//                 return (NULL);
-//         else
-//                 while (list->next_node)
-//                         list = list->next_node;
-//         return (list);
-// }
+int	check_nl(t_list *list)
+{
+	int	i;
 
-// void free_list(t_list **list, char *str)
-// {
-//         t_list *z;
+	i = 0;
+	if (list == NULL)
+		return (0);
+	while (list)
+	{
+		i = 0;
+		while (list->string[i] && i < BUFFER_SIZE)
+		{
+			if (list->string[i] == '\n' || list->string[i] == '\0')
+				return (1);
+			i++;
+		}
+		list = list->next;
+	}
+	return (0);
+}
 
-//         while (*list)
-//         {
-//                 z = (*list)->next_node;
-//                 free((*list)->buffer);
-// 		free(*list);
-//                 *list = z;
-//         }
-//         *list = NULL;
-//         if (str)
-//         {
-//                 (*list)->buffer = str;
-//                 (*list)->next_node = NULL;
-//         }
-//         else
-//                 free(str);
-// }
+void	concatenate(t_list **list, char *str)
+{
+	t_list	*new_node;
+	t_list	*last_node;
 
-// int line_len(t_list *list)
-// {
-//         int len;
-//         int i;
+	last_node = find_last_node(*list);
+	new_node = (t_list *)malloc(sizeof(t_list));
+	new_node->string = str;
+	new_node->next = NULL;
+	if ((*list) == NULL)
+	{
+		(*list) = new_node;
+		return ;
+	}
+	else
+		last_node->next = new_node;
+}
 
-//         len = 0;
-// 	if (list == NULL)
-// 		return (0);
-// 	if (list->next_node == NULL)
-// 		return (0);
-//         while (list)
-//         {
-// 		if (list->buffer)
-// 		{	
-// 			i = 0;
-//                 	while (list->buffer[i] != '\0')
-//                 	{
-//                         	len++;
-//                         	i++;
-//                 	}
-// 		}
-//                 list = list->next_node;
-//         }
-//         return (len);
-// }
+int	line_len(t_list *list)
+{
+	int	len;
+	int	i;
 
-// char *cut(char *str)
-// {
-//         int i;
-//         int j;
-//         char *right_str;
+	len = 0;
+	while (list)
+	{
+		i = 0;
+		while (list->string[i])
+		{
+			if (list->string[i] == '\n')
+			{
+				len++;
+				return (len);
+			}
+			i++;
+			len++;
+		}
+		list = list->next;
+	}
+	return (len);
+}
 
-//         i = 0;
-//         j = 0;
-//         while (str[i] != '\n')
-//                 i++;
-//         right_str = (char *)malloc(sizeof(char) * (i + 1));
-//         while (str[j])
-//         {
-//                 right_str[j] = str[j];
-//                 if (str[j] == '\n')
-//                 {
-//                         j++;
-//                         break;
-//                 }
-//                 j++;
-//         }
-//         right_str[j] = '\0';
-//         return (right_str);
-// }
+void	free_list(t_list **list, t_list *first_node, char *str)
+{
+	t_list	*z;
 
+	while (*list)
+	{
+		z = (*list)->next;
+		free((*list)->string);
+		free((*list));
+		(*list) = z;
+	}
+	*list = NULL;
+	if (first_node->string[0])
+	{
+		(*list) = first_node;
+	}
+	else
+	{
+		free(str);
+		free(first_node);
+	}
+}
